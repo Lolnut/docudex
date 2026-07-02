@@ -11,7 +11,10 @@
         <div class="drop-hint">Drop PDF files here or click to browse</div>
         <div id="main-content">
             <div id="documents-panel">
-                <h1>Indexed Documents</h1>
+                <div class="panel-header-row">
+                    <h1>Indexed Documents</h1>
+                    <button id="queue-open" class="queue-open-btn">&#9776; Queue</button>
+                </div>
                 <table id="documents-table">
                     <thead>
                         <tr>
@@ -35,27 +38,14 @@
             </div>
         </div>
 
-        <button id="queue-toggle" class="queue-toggle">&#9776; Queue</button>
-
         <div id="queue-panel">
             <div class="queue-header">
                 <h2>Upload Queue</h2>
                 <button id="refresh-queue">Refresh</button>
+                <button id="queue-close" class="queue-close-btn">&times;</button>
             </div>
             <p class="queue-hint">PDF files only</p>
-            <table id="queue-table">
-                <thead>
-                    <tr>
-                        <th>Filename</th>
-                        <th>Size</th>
-                        <th>Added</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="queue-body">
-                </tbody>
-            </table>
+            <div id="queue-body" class="queue-cards"></div>
         </div>
     </div>
 
@@ -141,11 +131,11 @@
         async function loadQueue() {
             const res = await fetch('/api/queue');
             const data = await res.json();
-            const tbody = document.getElementById('queue-body');
-            tbody.innerHTML = '';
+            const container = document.getElementById('queue-body');
+            container.innerHTML = '';
 
             if (data.items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="queue-empty">No files queued</td></tr>';
+                container.innerHTML = '<div class="queue-empty">No files queued</div>';
                 return;
             }
 
@@ -155,16 +145,25 @@
             });
 
             sorted.forEach(item => {
-                const tr = document.createElement('tr');
+                const card = document.createElement('div');
                 const statusClass = `status-${item.status}`;
-                tr.innerHTML = `
-                    <td title="${item.filename}">${item.filename}</td>
-                    <td>${formatSize(item.file_size)}</td>
-                    <td>${formatDate(item.added_at)}</td>
-                    <td><span class="${statusClass}">${item.status}</span></td>
-                    <td><button class="delete-btn" data-id="${item.id}" data-type="queue">Delete</button></td>
+                card.className = 'queue-card';
+                card.innerHTML = `
+                    <div class="card-main">
+                        <div class="card-info">
+                            <div class="card-filename" title="${item.filename}">${item.filename}</div>
+                            <div class="card-meta">
+                                <span>${formatSize(item.file_size)}</span>
+                                <span>${formatDate(item.added_at)}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <span class="${statusClass}">${item.status}</span>
+                            <button class="delete-btn" data-id="${item.id}" data-type="queue">Delete</button>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                container.appendChild(card);
             });
         }
 
@@ -173,7 +172,8 @@
                 const id = e.target.dataset.id;
                 const type = e.target.dataset.type;
                 if (confirm('Delete this file and its database entry?')) {
-                    await fetch(`/api/${type}s/${id}`, { method: 'DELETE' });
+                    const endpoint = type === 'queue' ? `/api/queue/${id}` : `/api/documents/${id}`;
+                    await fetch(endpoint, { method: 'DELETE' });
                     if (type === 'document') {
                         loadDocuments(currentPage);
                     } else {
@@ -192,6 +192,12 @@
         });
 
         document.getElementById('refresh-queue').addEventListener('click', loadQueue);
+        document.getElementById('queue-close').addEventListener('click', () => {
+            queuePanel.classList.remove('open');
+        });
+        document.getElementById('queue-open').addEventListener('click', () => {
+            queuePanel.classList.add('open');
+        });
 
         const dropZone = document.getElementById('drop-zone');
         const queuePanel = document.getElementById('queue-panel');
@@ -232,11 +238,6 @@
                 await fetch('/api/upload', { method: 'POST', body: formData });
                 loadQueue();
             }
-        });
-
-        const queueToggle = document.getElementById('queue-toggle');
-        queueToggle.addEventListener('click', () => {
-            queuePanel.classList.toggle('open');
         });
 
         loadDocuments();

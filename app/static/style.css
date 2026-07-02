@@ -43,6 +43,41 @@ h1 {
     color: #e94560;
 }
 
+.panel-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.queue-open-btn {
+    background: #0f3460;
+    color: #e0e0e0;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.queue-open-btn:hover {
+    background: #e94560;
+}
+
+.queue-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.queue-close-btn:hover {
+    color: #e94560;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -117,24 +152,6 @@ tr:hover {
     cursor: not-allowed;
 }
 
-.queue-toggle {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    background: #0f3460;
-    color: #e0e0e0;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    z-index: 100;
-    font-size: 0.9em;
-}
-
-.queue-toggle:hover {
-    background: #e94560;
-}
-
 #queue-panel {
     position: fixed;
     top: 0;
@@ -152,6 +169,64 @@ tr:hover {
 
 #queue-panel.open {
     right: 0;
+}
+
+.queue-cards {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.queue-card {
+    background: #0d1b36;
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    padding: 12px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.queue-card:hover {
+    background: #111d35;
+    border-color: #1a4a80;
+}
+
+.card-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-filename {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.78em;
+    color: #888;
+}
+
+.card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .queue-header {
@@ -178,58 +253,52 @@ tr:hover {
     letter-spacing: 0.5px;
 }
 
-#queue-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-#queue-table th {
-    font-size: 0.75em;
-    padding: 10px 12px;
-}
-
-#queue-table td {
-    font-size: 0.85em;
-    padding: 8px 12px;
-}
-
-#queue-table tbody tr {
-    transition: background 0.15s;
-}
-
-#queue-table tbody tr:hover {
-    background: #1a2d52;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
 .status-queued {
     background: rgba(240, 192, 64, 0.15);
     color: #f0c040;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .status-processing {
     background: rgba(64, 160, 240, 0.15);
     color: #40a0f0;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .status-done {
     background: rgba(64, 240, 128, 0.15);
     color: #40f080;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .status-failed {
     background: rgba(233, 69, 96, 0.15);
     color: #e94560;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 
 .queue-empty {
@@ -251,27 +320,6 @@ tr:hover {
 
 #refresh-queue:hover {
     background: #e94560;
-}
-
-#queue-table {
-    flex: 1;
-    overflow: auto;
-}
-
-.status-queued {
-    color: #f0c040;
-}
-
-.status-processing {
-    color: #40a0f0;
-}
-
-.status-done {
-    color: #40f080;
-}
-
-.status-failed {
-    color: #e94560;
 }
 
 #overlay {
