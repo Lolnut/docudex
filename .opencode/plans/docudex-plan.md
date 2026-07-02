@@ -6,7 +6,7 @@
 docudex/
 ├── app/
 │   ├── __init__.py              # App factory
-│   ├── config.py                # Configuration (storage path, etc.)
+│   ├── config.py                # Configuration (storage path, API key, etc.)
 │   ├── models/                  # SQLAlchemy models
 │   │   ├── __init__.py
 │   │   ├── queue.py             # Queue model
@@ -15,7 +15,7 @@ docudex/
 │   │   └── pdf_tag.py           # Tags model
 │   ├── routes/
 │   │   ├── __init__.py
-│   │   ├── api.py               # Agent search endpoints
+│   │   ├── api.py               # Agent search + categorization endpoints
 │   │   └── ui.py                # UI + file management endpoints
 │   ├── services/
 │   │   ├── __init__.py
@@ -54,6 +54,7 @@ docudex/
 | file_size     | INTEGER  | Byte size                    |
 | sha256_hash   | TEXT     | Unique, for dedup            |
 | total_pages   | INTEGER  | Page count                   |
+| summary       | TEXT     | 3-sentence LLM summary       |
 | uploaded_at   | DATETIME | Auto on insert               |
 | indexed_at    | DATETIME | When indexing completed      |
 
@@ -91,21 +92,16 @@ CREATE VIRTUAL TABLE pdfs_fts USING fts5(
 | POST   | /api/upload             | Upload file(s) → adds to queue           |
 | GET    | /api/queue              | List queued files                        |
 | DELETE | /api/queue/<id>         | Remove from queue + delete file          |
-| POST   | /api/queue/process      | Process all queued files                 |
-| GET    | /api/documents          | List indexed documents (with pagination) |
+| GET    | /api/documents          | List indexed documents (20/page)         |
 | DELETE | /api/documents/<id>     | Delete indexed file + all related records|
 
-### AI Agent Search (served by `api.py`)
+### AI Agent Search (served by `api.py`) — requires API key
 | Method | Path                    | Description                              |
 |--------|-------------------------|------------------------------------------|
 | GET    | /agent/search           | FTS5 full-text search                    |
 | GET    | /agent/documents        | List indexed documents (agent format)    |
 | GET    | /agent/documents/<id>   | Get document metadata + pages            |
-
-### LLM Categorization (future)
-| Method | Path                    | Description                              |
-|--------|-------------------------|------------------------------------------|
-| POST   | /agent/categorize       | Trigger LLM to tag/summarize queued PDFs |
+| POST   | /agent/categorize       | Process all queued files                 |
 
 ## Confirmed Decisions
 
@@ -114,13 +110,14 @@ CREATE VIRTUAL TABLE pdfs_fts USING fts5(
 3. **Frontend**: Flask Jinja2 + vanilla JS (no build step)
 4. **File storage**: Configurable path via `config.py` (default: `uploads/`)
 5. **Processing**: Synchronous (blocking)
-6. **Tags**: LLM categorization script (separate, triggered manually)
-
-## Remaining Questions
-
-1. **Queue processing**: Auto-process on upload, or manual "Process Queue" button?
-2. **Authentication**: Any auth needed? (Open for now, or API keys / basic auth?)
-3. **Agent API auth**: Open or require an API key header?
-4. **Pagination**: How many documents per page? (e.g., 20, 50, 100?)
-5. **Queue panel refresh**: Auto-refresh polling (e.g., every 5s) or manual refresh button?
-6. **LLM categorization**: Triggered via `POST /agent/categorize` endpoint, or a CLI command (`uv run categorize.py`)?
+6. **Tags**: LLM categorization via `POST /agent/categorize` (cron-triggered)
+7. **Queue processing**: Cron job on host triggers `/agent/categorize`
+8. **Auth**: UI = Nginx Auth, Agent API = API key header
+9. **Pagination**: 20 documents per page
+10. **Queue panel refresh**: Manual refresh button
+11. **API key**: Env var `DOCUDAX_API_KEY`
+12. **Duplicate handling**: Prompt user for resolution (skip vs update)
+13. **Categorize endpoint**: Processes all queued files in one call
+14. **Summary storage**: 3-sentence LLM summary in `pdfs` table
+15. **Queue panel columns**: filename, file_path, file_size, added_at, status
+16. **Document table columns**: filename, file_path, summary, total_pages, indexed_at, tags
