@@ -13,7 +13,10 @@
             <div id="documents-panel">
                 <div class="panel-header-row">
                     <h1>Indexed Documents</h1>
-                    <button id="queue-open" class="queue-open-btn">&#9776; Queue</button>
+                    <div class="panel-actions">
+                        <button id="queue-open" class="queue-open-btn">&#9776; Queue</button>
+                        <button id="auth-open" class="auth-open-btn">Key</button>
+                    </div>
                 </div>
                 <table id="documents-table">
                     <thead>
@@ -46,6 +49,15 @@
             </div>
             <p class="queue-hint">PDF files only</p>
             <div id="queue-body" class="queue-cards"></div>
+        </div>
+
+        <div id="auth-panel">
+            <div class="auth-header">
+                <h2>Agent Authentication</h2>
+                <button id="refresh-auth">Refresh</button>
+                <button id="auth-close" class="auth-close-btn">&times;</button>
+            </div>
+            <div id="auth-body" class="auth-body"></div>
         </div>
     </div>
 
@@ -178,6 +190,67 @@
             });
         }
 
+        async function loadAuth() {
+            const res = await fetch('/admin/pairings');
+            const data = await res.json();
+            const container = document.getElementById('auth-body');
+            container.innerHTML = '';
+
+            const pendingDiv = document.createElement('div');
+            pendingDiv.className = 'auth-section';
+            pendingDiv.innerHTML = '<h3>Pending Requests</h3>';
+            const pendingList = document.createElement('div');
+            pendingList.className = 'auth-list';
+
+            if (data.pending.length === 0) {
+                pendingList.innerHTML = '<div class="auth-empty">No pending requests</div>';
+            } else {
+                data.pending.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'auth-row';
+                    row.innerHTML = `
+                        <div class="auth-info">
+                            <div class="auth-agent">${item.agent_id}</div>
+                            <div class="auth-meta">${formatDate(item.created_at)} &middot; ${item.ip_address || 'unknown'}</div>
+                        </div>
+                        <div class="auth-actions">
+                            <button class="auth-approve-btn" data-id="${item.id}">Approve</button>
+                            <button class="auth-deny-btn" data-id="${item.id}">Deny</button>
+                        </div>
+                    `;
+                    pendingList.appendChild(row);
+                });
+            }
+            pendingDiv.appendChild(pendingList);
+            container.appendChild(pendingDiv);
+
+            const recentDiv = document.createElement('div');
+            recentDiv.className = 'auth-section';
+            recentDiv.innerHTML = '<h3>Recent</h3>';
+            const recentList = document.createElement('div');
+            recentList.className = 'auth-list';
+
+            if (data.recent.length === 0) {
+                recentList.innerHTML = '<div class="auth-empty">No recent activity</div>';
+            } else {
+                data.recent.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'auth-row';
+                    const statusClass = item.status === 'approved' ? 'status-approved' :
+                                       item.status === 'denied' ? 'status-denied' : 'status-expired';
+                    row.innerHTML = `
+                        <div class="auth-info">
+                            <div class="auth-agent">${item.agent_id}</div>
+                            <div class="auth-meta">${formatDate(item.created_at)} &middot; <span class="${statusClass}">${item.status}</span></div>
+                        </div>
+                    `;
+                    recentList.appendChild(row);
+                });
+            }
+            recentDiv.appendChild(recentList);
+            container.appendChild(recentDiv);
+        }
+
         document.addEventListener('click', async (e) => {
             if (e.target.classList.contains('delete-btn')) {
                 const id = e.target.dataset.id;
@@ -202,6 +275,30 @@
                     }
                 };
             }
+
+            if (e.target.classList.contains('auth-approve-btn')) {
+                const id = e.target.dataset.id;
+                e.target.disabled = true;
+                e.target.textContent = 'Approving...';
+                const res = await fetch(`/admin/pairings/${id}/approve`, { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showModal(
+                        'Pairing Approved',
+                        `Copy this token for your agent: ${data.pairing_token}`,
+                        [{ text: 'Close', value: 'close' }]
+                    );
+                }
+                loadAuth();
+            }
+
+            if (e.target.classList.contains('auth-deny-btn')) {
+                const id = e.target.dataset.id;
+                e.target.disabled = true;
+                e.target.textContent = 'Denying...';
+                await fetch(`/admin/pairings/${id}/deny`, { method: 'POST' });
+                loadAuth();
+            }
         });
 
         document.getElementById('prev-page').addEventListener('click', () => {
@@ -213,23 +310,34 @@
         });
 
         document.getElementById('refresh-queue').addEventListener('click', loadQueue);
+        document.getElementById('refresh-auth').addEventListener('click', loadAuth);
         document.getElementById('queue-close').addEventListener('click', () => {
             queuePanel.classList.remove('open');
+        });
+        document.getElementById('auth-close').addEventListener('click', () => {
+            authPanel.classList.remove('open');
         });
         document.getElementById('queue-open').addEventListener('click', (e) => {
             e.stopPropagation();
             queuePanel.classList.add('open');
         });
+        document.getElementById('auth-open').addEventListener('click', (e) => {
+            e.stopPropagation();
+            authPanel.classList.add('open');
+        });
 
         document.addEventListener('click', (e) => {
-            if (queuePanel.classList.contains('open') &&
-                !queuePanel.contains(e.target)) {
+            if (queuePanel.classList.contains('open') && !queuePanel.contains(e.target)) {
                 queuePanel.classList.remove('open');
+            }
+            if (authPanel.classList.contains('open') && !authPanel.contains(e.target)) {
+                authPanel.classList.remove('open');
             }
         });
 
         const dropZone = document.getElementById('drop-zone');
         const queuePanel = document.getElementById('queue-panel');
+        const authPanel = document.getElementById('auth-panel');
         let dragCounter = 0;
 
         dropZone.addEventListener('dragenter', (e) => {
@@ -271,6 +379,7 @@
 
         loadDocuments();
         loadQueue();
+        loadAuth();
     </script>
 </body>
 </html>

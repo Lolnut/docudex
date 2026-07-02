@@ -1,12 +1,13 @@
 import os
 
-from flask import Blueprint, request, jsonify, render_template, current_app
-from werkzeug.utils import secure_filename
+from flask import Blueprint, request, jsonify, render_template, current_app, g
 
 from app.models import db
 from app.models.queue import Queue
 from app.models.pdf import Pdf, PdfText, PdfTag
+from app.models.pairing import PairingRequest
 from app.services.file_storage import FileStorage
+from app.services.auth import generate_pairing_token, verify_token
 
 ui_bp = Blueprint("ui", __name__)
 
@@ -28,6 +29,7 @@ def upload():
 
     results = []
     for file in files:
+        from werkzeug.utils import secure_filename
         filename = secure_filename(file.filename)
         if not filename.lower().endswith(".pdf"):
             results.append({"filename": filename, "status": "rejected", "error": "Only PDF files allowed"})
@@ -101,3 +103,57 @@ def delete_document(pdf_id):
     db.session.commit()
 
     return jsonify({"message": "Deleted"}), 200
+
+
+@ui_bp.route("/admin/pairings", methods=["GET"])
+def list_pairings():
+    pending = PairingRequest.query.filter_by(status="pending").order_by(
+        PairingRequest.created_at.desc()
+    ).all()
+    recent = PairingRequest.query.filter(
+        PairingRequest.status.in_(["approved", "expired", "denied"])
+    ).order_by(
+        PairingRequest.created_at.desc()
+    ).limit(20).all()
+    return jsonify({
+        "pending": [p.to_dict() for p in pending],
+        "recent": [p.to_dict() for p in recent],
+    })
+
+
+@ui_bp.route("/admin/pairings/<pairing_id>/approve", methods=["POST"])
+def approve_pairing(pairing_id):
+    pairing = db.session.get(PairingRequest, pairing_id)
+    if not pairing:
+        return jsonify({"error": "Pairing request not found"}), 404
+
+    if pairing.status != "pending":
+        return jsonify({"error": "Pairing request already resolved"}), 400
+
+    pairing_token = generate_pairing_token()
+    pairing.pairing_token = pairing_token
+    pairing.status = "approved"
+    pairing.approved_at = db.func.now()
+    db.session.commit()
+
+    return jsonify({
+        "pairing_token": pairing_token,
+        "agent_id": pairing.agent_id,
+        "expires_in": 3600,
+    })
+
+
+@ui_bp.route("/admin/pairings/<pairing_id>/deny", methods=["POST"])
+def deny_pairing(pairing_id):
+    pairing = db.session.get(PairingRequest, pairing_id)
+    if not pairing:
+        return jsonify({"error": "Pairing request not found"}), 404
+
+    if pairing.status != "pending":
+        return jsonify({"error": "Pairing request already resolved"}), 400
+
+    pairing.status = "denied"
+    pairing.expires_at = db.func.now()
+    db.session.commit()
+
+    return jsonify({"message": "Denied"})

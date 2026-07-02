@@ -50,6 +50,11 @@ h1 {
     margin-bottom: 16px;
 }
 
+.panel-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .queue-open-btn {
     background: #0f3460;
     color: #e0e0e0;
@@ -64,18 +69,20 @@ h1 {
     background: #e94560;
 }
 
-.queue-close-btn {
-    background: none;
+.auth-open-btn {
+    background: #0f3460;
+    color: #e0e0e0;
     border: none;
-    color: #888;
-    font-size: 1.5em;
+    padding: 8px 14px;
+    border-radius: 4px;
     cursor: pointer;
-    padding: 0 4px;
-    line-height: 1;
+    font-size: 0.85em;
+    font-weight: 600;
+    width: 40px;
 }
 
-.queue-close-btn:hover {
-    color: #e94560;
+.auth-open-btn:hover {
+    background: #e94560;
 }
 
 table {
@@ -152,6 +159,24 @@ tr:hover {
     cursor: not-allowed;
 }
 
+.queue-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #0f3460;
+    color: #e0e0e0;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 0.9em;
+}
+
+.queue-toggle:hover {
+    background: #e94560;
+}
+
 #queue-panel {
     position: fixed;
     top: 0;
@@ -171,10 +196,6 @@ tr:hover {
 #queue-panel.open {
     right: 0;
     pointer-events: auto;
-}
-
-#queue-panel.open {
-    right: 0;
 }
 
 .queue-cards {
@@ -233,6 +254,10 @@ tr:hover {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+}
+
+#queue-panel.open {
+    right: 0;
 }
 
 .queue-header {
@@ -328,6 +353,11 @@ tr:hover {
     background: #e94560;
 }
 
+#queue-table {
+    flex: 1;
+    overflow: auto;
+}
+
 #overlay {
     position: fixed;
     inset: 0;
@@ -403,4 +433,191 @@ td, th {
 
 td[title] {
     cursor: help;
+}
+
+.queue-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.queue-close-btn:hover {
+    color: #e94560;
+}
+
+.auth-close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.auth-close-btn:hover {
+    color: #e94560;
+}
+
+#auth-panel {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 420px;
+    height: 100vh;
+    background: #16213e;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.4);
+    transition: right 0.3s ease;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+#auth-panel.open {
+    right: 0;
+    pointer-events: auto;
+}
+
+.auth-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid #0f3460;
+}
+
+.auth-header h2 {
+    color: #e94560;
+    font-size: 1.1em;
+}
+
+#refresh-auth {
+    background: #0f3460;
+    color: #e0e0e0;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+#refresh-auth:hover {
+    background: #e94560;
+}
+
+.auth-body {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+}
+
+.auth-section {
+    margin-bottom: 20px;
+}
+
+.auth-section h3 {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #0f3460;
+}
+
+.auth-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.auth-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1b36;
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+
+.auth-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.auth-agent {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.auth-meta {
+    font-size: 0.78em;
+    color: #888;
+    margin-top: 2px;
+}
+
+.auth-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.auth-approve-btn {
+    background: #40f080;
+    color: #1a1a2e;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.auth-approve-btn:hover {
+    background: #30d070;
+}
+
+.auth-deny-btn {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.auth-deny-btn:hover {
+    background: #c73650;
+}
+
+.auth-empty {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 0.85em;
+}
+
+.status-approved {
+    color: #40f080;
+}
+
+.status-denied {
+    color: #e94560;
+}
+
+.status-expired {
+    color: #888;
 }

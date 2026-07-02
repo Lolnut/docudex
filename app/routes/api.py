@@ -1,33 +1,51 @@
 import os
 import hashlib
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 
 from app.models import db
 from app.models.queue import Queue
 from app.models.pdf import Pdf, PdfText, PdfTag
+from app.models.pairing import PairingRequest
 from app.services.file_storage import FileStorage
 from app.services.pdf_processor import compute_sha256, extract_text
+from app.services.auth import generate_nonce, generate_pairing_token, verify_token
 
 api_bp = Blueprint("api", __name__)
 
 
 def check_api_key():
     api_key = current_app.config["API_KEY"]
-    if not api_key:
-        return None
-    request_key = request.headers.get("X-API-Key")
-    if request_key != api_key:
-        return jsonify({"error": "Invalid or missing API key"}), 401
+    if api_key:
+        print("[docudex] Warning: DOCUDAX_API_KEY is deprecated. Use agent pairing instead.")
+        request_key = request.headers.get("X-API-Key")
+        if request_key != api_key:
+            return jsonify({"error": "Invalid or missing API key"}), 401
     return None
 
 
-@api_bp.route("/agent/search", methods=["GET"])
-def search():
-    auth_error = check_api_key()
-    if auth_error:
-        return auth_error
+def require_jwt(f):
+    from functools import wraps
 
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = request.headers.get("Authorization")
+        payload = verify_token(token)
+        if not payload:
+            return jsonify({
+                "error": "unauthenticated",
+                "message": "Pair with the server first",
+                "pairing_url": "/agent/pair",
+            }), 401
+        g.current_agent = payload["sub"]
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+@api_bp.route("/agent/search", methods=["GET"])
+@require_jwt
+def search():
     query = request.args.get("q", "")
     if not query:
         return jsonify({"error": "Query parameter 'q' is required"}), 400
@@ -50,11 +68,8 @@ def search():
 
 
 @api_bp.route("/agent/documents", methods=["GET"])
+@require_jwt
 def agent_documents():
-    auth_error = check_api_key()
-    if auth_error:
-        return auth_error
-
     page = request.args.get("page", 1, type=int)
     per_page = current_app.config["PER_PAGE"]
 
@@ -71,11 +86,8 @@ def agent_documents():
 
 
 @api_bp.route("/agent/documents/<int:pdf_id>", methods=["GET"])
+@require_jwt
 def agent_document(pdf_id):
-    auth_error = check_api_key()
-    if auth_error:
-        return auth_error
-
     pdf = db.session.get(Pdf, pdf_id)
     if not pdf:
         return jsonify({"error": "Document not found"}), 404
@@ -84,11 +96,8 @@ def agent_document(pdf_id):
 
 
 @api_bp.route("/agent/categorize", methods=["POST"])
+@require_jwt
 def categorize():
-    auth_error = check_api_key()
-    if auth_error:
-        return auth_error
-
     queued = Queue.query.filter_by(status="queued").order_by(Queue.added_at).all()
 
     if not queued:
@@ -160,3 +169,70 @@ def categorize():
             })
 
     return jsonify({"results": results})
+
+
+@api_bp.route("/agent/pair", methods=["GET"])
+def get_pairing():
+    agent_id = request.args.get("agent_id", "unknown")
+    nonce = generate_nonce()
+    pairing_id = os.urandom(8).hex()
+
+    from datetime import datetime, timezone, timedelta
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    pairing = PairingRequest(
+        id=pairing_id,
+        agent_id=agent_id,
+        nonce=nonce,
+        status="pending",
+        ip_address=request.remote_addr,
+        expires_at=expires_at,
+    )
+    db.session.add(pairing)
+    db.session.commit()
+
+    return jsonify({
+        "nonce": nonce,
+        "pairing_url": f"/pair/approve?id={pairing_id}",
+    }), 201
+
+
+@api_bp.route("/agent/pair/verify", methods=["POST"])
+def verify_pairing():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    pairing_id = data.get("pairing_id")
+    nonce = data.get("nonce")
+    pairing_token = data.get("pairing_token")
+
+    if not all([pairing_id, nonce, pairing_token]):
+        return jsonify({"error": "pairing_id, nonce, and pairing_token are required"}), 400
+
+    pairing = db.session.get(PairingRequest, pairing_id)
+    if not pairing:
+        return jsonify({"error": "Invalid pairing request"}), 404
+
+    if pairing.status != "approved":
+        return jsonify({"error": "Pairing request not approved"}), 403
+
+    if pairing.nonce != nonce:
+        return jsonify({"error": "Invalid nonce"}), 403
+
+    if pairing.pairing_token != pairing_token:
+        return jsonify({"error": "Invalid pairing token"}), 403
+
+    from datetime import datetime, timezone
+    from app.services.auth import generate_jwt
+    token = generate_jwt(pairing.agent_id)
+
+    pairing.status = "expired"
+    pairing.expires_at = datetime.now(timezone.utc)
+    db.session.commit()
+
+    return jsonify({
+        "token": token,
+        "agent_id": pairing.agent_id,
+        "expires_in": 3600,
+    })
