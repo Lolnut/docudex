@@ -23,6 +23,15 @@ body {
     background: #16213e;
 }
 
+.drop-hint {
+    text-align: center;
+    padding: 12px;
+    color: #666;
+    font-size: 0.85em;
+    border-bottom: 1px solid #0f3460;
+    background: #0d1b36;
+}
+
 #main-content {
     flex: 1;
     overflow: auto;
@@ -156,6 +165,78 @@ tr:hover {
 .queue-header h2 {
     color: #e94560;
     font-size: 1.1em;
+}
+
+.queue-hint {
+    padding: 8px 16px;
+    margin: 0;
+    font-size: 0.8em;
+    color: #888;
+    background: #0d1b36;
+    border-bottom: 1px solid #0f3460;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+#queue-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#queue-table th {
+    font-size: 0.75em;
+    padding: 10px 12px;
+}
+
+#queue-table td {
+    font-size: 0.85em;
+    padding: 8px 12px;
+}
+
+#queue-table tbody tr {
+    transition: background 0.15s;
+}
+
+#queue-table tbody tr:hover {
+    background: #1a2d52;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-queued {
+    background: rgba(240, 192, 64, 0.15);
+    color: #f0c040;
+}
+
+.status-processing {
+    background: rgba(64, 160, 240, 0.15);
+    color: #40a0f0;
+}
+
+.status-done {
+    background: rgba(64, 240, 128, 0.15);
+    color: #40f080;
+}
+
+.status-failed {
+    background: rgba(233, 69, 96, 0.15);
+    color: #e94560;
+}
+
+.queue-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 0.9em;
 }
 
 #refresh-queue {

@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 
 from app.config import Config
@@ -13,6 +15,8 @@ def create_app():
     with app.app_context():
         from app.models.queue import Queue
         from app.models.pdf import Pdf, PdfText, PdfTag
+        db_path = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "")
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         db.create_all()
         _init_fts(app)
 
