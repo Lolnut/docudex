@@ -1,0 +1,11 @@
+[project]
+name = "docudex"
+version = "0.1.0"
+description = "Document indexing API"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0",
+]
+
+[dependency-groups]
+dev = []
