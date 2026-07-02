@@ -165,6 +165,12 @@ tr:hover {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    pointer-events: none;
+}
+
+#queue-panel.open {
+    right: 0;
+    pointer-events: auto;
 }
 
 #queue-panel.open {
@@ -366,14 +372,22 @@ tr:hover {
     font-size: 0.9em;
 }
 
-#modal-skip {
+.modal-actions button:not(.btn-danger) {
     background: #0f3460;
     color: #e0e0e0;
 }
 
-#modal-update {
+.modal-actions button:not(.btn-danger):hover {
+    background: #1a4a80;
+}
+
+.btn-danger {
     background: #e94560;
     color: white;
+}
+
+.btn-danger:hover {
+    background: #c73650;
 }
 
 .hidden {

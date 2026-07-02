@@ -54,7 +54,7 @@
         <div class="modal-content">
             <h3 id="modal-title">Duplicate Detected</h3>
             <p id="modal-message"></p>
-            <div class="modal-actions">
+            <div class="modal-actions" id="modal-actions">
                 <button id="modal-skip">Skip</button>
                 <button id="modal-update">Update Existing</button>
             </div>
@@ -65,18 +65,29 @@
         let currentPage = 1;
         let modalCallback = null;
 
-        function showModal(title, message, callback) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-message').textContent = message;
-            document.getElementById('modal').classList.remove('hidden');
-            document.getElementById('overlay').classList.remove('hidden');
-            modalCallback = callback;
-        }
-
         function hideModal() {
             document.getElementById('modal').classList.add('hidden');
             document.getElementById('overlay').classList.add('hidden');
             modalCallback = null;
+        }
+
+        function showModal(title, message, buttons) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            const actionsContainer = document.getElementById('modal-actions');
+            actionsContainer.innerHTML = '';
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.textContent = btn.text;
+                if (btn.class) button.className = btn.class;
+                button.addEventListener('click', () => {
+                    if (modalCallback) modalCallback(btn.value);
+                    hideModal();
+                });
+                actionsContainer.appendChild(button);
+            });
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('overlay').classList.remove('hidden');
         }
 
         document.getElementById('modal-skip').addEventListener('click', () => {
@@ -171,15 +182,25 @@
             if (e.target.classList.contains('delete-btn')) {
                 const id = e.target.dataset.id;
                 const type = e.target.dataset.type;
-                if (confirm('Delete this file and its database entry?')) {
-                    const endpoint = type === 'queue' ? `/api/queue/${id}` : `/api/documents/${id}`;
-                    await fetch(endpoint, { method: 'DELETE' });
-                    if (type === 'document') {
-                        loadDocuments(currentPage);
-                    } else {
-                        loadQueue();
+                showModal(
+                    'Confirm Delete',
+                    'Delete this file and its database entry?',
+                    [
+                        { text: 'Cancel', value: 'cancel' },
+                        { text: 'Delete', value: 'delete', class: 'btn-danger' }
+                    ]
+                );
+                modalCallback = async (action) => {
+                    if (action === 'delete') {
+                        const endpoint = type === 'queue' ? `/api/queue/${id}` : `/api/documents/${id}`;
+                        await fetch(endpoint, { method: 'DELETE' });
+                        if (type === 'document') {
+                            loadDocuments(currentPage);
+                        } else {
+                            loadQueue();
+                        }
                     }
-                }
+                };
             }
         });
 
@@ -195,8 +216,16 @@
         document.getElementById('queue-close').addEventListener('click', () => {
             queuePanel.classList.remove('open');
         });
-        document.getElementById('queue-open').addEventListener('click', () => {
+        document.getElementById('queue-open').addEventListener('click', (e) => {
+            e.stopPropagation();
             queuePanel.classList.add('open');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (queuePanel.classList.contains('open') &&
+                !queuePanel.contains(e.target)) {
+                queuePanel.classList.remove('open');
+            }
         });
 
         const dropZone = document.getElementById('drop-zone');
