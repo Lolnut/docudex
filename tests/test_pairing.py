@@ -12,7 +12,7 @@ from app.models import db
 
 @pytest.fixture
 def app():
-    os.environ["DOCUDAX_JWT_SECRET"] = "test-secret-for-unit-tests-only"
+    os.environ["DOCUDEX_JWT_SECRET"] = "test-secret-for-unit-tests-only"
     app = create_app()
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
     app.config["TESTING"] = True

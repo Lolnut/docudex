@@ -6,7 +6,7 @@ import os
 import secrets
 from datetime import datetime, timezone, timedelta
 
-SECRET_KEY_ENV = "DOCUDAX_JWT_SECRET"
+SECRET_KEY_ENV = "DOCUDEX_JWT_SECRET"
 DEFAULT_EXPIRY_HOURS = 1
 
 

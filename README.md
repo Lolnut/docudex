@@ -16,8 +16,8 @@ cp .env.example .env  # edit as needed
 
 | Variable | Description | Default |
 |---|---|---|
-| `DOCUDAX_JWT_SECRET` | Secret for signing agent JWT tokens | Auto-generated on first run |
-| `DOCUDAX_STORAGE_PATH` | Directory for uploaded PDFs | `./uploads` |
+| `DOCUDEX_JWT_SECRET` | Secret for signing agent JWT tokens | Auto-generated on first run |
+| `DOCUDEX_STORAGE_PATH` | Directory for uploaded PDFs | `./uploads` |
 
 ## Run
 
@@ -35,7 +35,7 @@ Open `http://127.0.0.1:5000` in a browser. Drag and drop PDF files or use the qu
 
 ### Agent Authentication (Pairing)
 
-Agents authenticate via a challenge-response pairing flow. This replaces the deprecated `DOCUDAX_API_KEY` method.
+Agents authenticate via a challenge-response pairing flow. This replaces the deprecated `DOCUDEX_API_KEY` method.
 
 **How it works:**
 

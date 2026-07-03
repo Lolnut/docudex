@@ -17,7 +17,7 @@ api_bp = Blueprint("api", __name__)
 def check_api_key():
     api_key = current_app.config["API_KEY"]
     if api_key:
-        print("[docudex] Warning: DOCUDAX_API_KEY is deprecated. Use agent pairing instead.")
+        print("[docudex] Warning: DOCUDEX_API_KEY is deprecated. Use agent pairing instead.")
         request_key = request.headers.get("X-API-Key")
         if request_key != api_key:
             return jsonify({"error": "Invalid or missing API key"}), 401
