@@ -77,8 +77,6 @@ h1 {
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.85em;
-    font-weight: 600;
-    width: 40px;
 }
 
 .auth-open-btn:hover {
