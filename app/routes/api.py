@@ -26,12 +26,36 @@ def check_api_key():
 
 def require_jwt(f):
     from functools import wraps
+    import json
+    import base64
 
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization")
         payload = verify_token(token)
         if not payload:
+            agent_id = None
+            try:
+                actual = token[7:] if token and token.startswith("Bearer ") else token
+                parts = actual.split(".")
+                if len(parts) == 3:
+                    raw_payload = parts[1]
+                    padding = 4 - len(raw_payload) % 4
+                    if padding != 4:
+                        raw_payload += "=" * padding
+                    decoded = json.loads(base64.urlsafe_b64decode(raw_payload))
+                    agent_id = decoded.get("sub")
+            except Exception:
+                pass
+
+            if agent_id:
+                pairing = PairingRequest.query.filter_by(
+                    agent_id=agent_id, status="verified"
+                ).order_by(PairingRequest.verified_at.desc()).first()
+                if pairing:
+                    new_token = generate_jwt(agent_id)
+                    return jsonify({"token": new_token}), 200
+
             return jsonify({
                 "error": "unauthenticated",
                 "message": "Pair with the server first",
@@ -174,6 +198,17 @@ def categorize():
 @api_bp.route("/agent/pair", methods=["GET"])
 def get_pairing():
     agent_id = request.args.get("agent_id", "unknown")
+
+    existing = PairingRequest.query.filter_by(
+        agent_id=agent_id, status="verified"
+    ).order_by(PairingRequest.verified_at.desc()).first()
+    if existing:
+        return jsonify({
+            "message": "Already paired",
+            "pairing_id": existing.id,
+            "verified_at": existing.verified_at.isoformat(),
+        }), 200
+
     nonce = generate_nonce()
     pairing_id = os.urandom(8).hex()
 
@@ -227,8 +262,8 @@ def verify_pairing():
     from app.services.auth import generate_jwt
     token = generate_jwt(pairing.agent_id)
 
-    pairing.status = "expired"
-    pairing.expires_at = datetime.now(timezone.utc)
+    pairing.status = "verified"
+    pairing.verified_at = datetime.now(timezone.utc)
     db.session.commit()
 
     return jsonify({

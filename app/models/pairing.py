@@ -17,6 +17,7 @@ class PairingRequest(db.Model):
     )
     expires_at = db.Column(db.DateTime, nullable=False)
     approved_at = db.Column(db.DateTime, nullable=True)
+    verified_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
         return {
@@ -28,4 +29,5 @@ class PairingRequest(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "approved_at": self.approved_at.isoformat() if self.approved_at else None,
+            "verified_at": self.verified_at.isoformat() if self.verified_at else None,
         }
