@@ -145,7 +145,7 @@
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('page-info').textContent = `Page ${data.page} of ${data.pages}`;
+            document.getElementById('page-info').textContent = `Page ${data.page} of ${Math.max(data.pages, 1)}`;
             document.getElementById('prev-page').disabled = page <= 1;
             document.getElementById('next-page').disabled = page >= data.pages;
             currentPage = data.page;
