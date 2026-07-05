@@ -216,6 +216,7 @@
                         <div class="auth-actions">
                             <button class="auth-approve-btn" data-id="${item.id}">Approve</button>
                             <button class="auth-deny-btn" data-id="${item.id}">Deny</button>
+                            <button class="auth-delete-btn" data-id="${item.id}">Remove</button>
                         </div>
                     `;
                     pendingList.appendChild(row);
@@ -242,6 +243,9 @@
                         <div class="auth-info">
                             <div class="auth-agent">${item.agent_id}</div>
                             <div class="auth-meta">${formatDate(item.created_at)} &middot; <span class="${statusClass}">${item.status}</span></div>
+                        </div>
+                        <div class="auth-actions">
+                            <button class="auth-delete-btn" data-id="${item.id}">Remove</button>
                         </div>
                     `;
                     recentList.appendChild(row);
@@ -298,6 +302,24 @@
                 e.target.textContent = 'Denying...';
                 await fetch(`/admin/pairings/${id}/deny`, { method: 'POST' });
                 loadAuth();
+            }
+
+            if (e.target.classList.contains('auth-delete-btn')) {
+                const id = e.target.dataset.id;
+                showModal(
+                    'Confirm Remove',
+                    'Remove this pairing request?',
+                    [
+                        { text: 'Cancel', value: 'cancel' },
+                        { text: 'Remove', value: 'remove', class: 'btn-danger' }
+                    ]
+                );
+                modalCallback = async (action) => {
+                    if (action === 'remove') {
+                        await fetch(`/admin/pairings/${id}`, { method: 'DELETE' });
+                        loadAuth();
+                    }
+                };
             }
         });
 

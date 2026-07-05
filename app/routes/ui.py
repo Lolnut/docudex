@@ -157,3 +157,15 @@ def deny_pairing(pairing_id):
     db.session.commit()
 
     return jsonify({"message": "Denied"})
+
+
+@ui_bp.route("/admin/pairings/<pairing_id>", methods=["DELETE"])
+def delete_pairing(pairing_id):
+    pairing = db.session.get(PairingRequest, pairing_id)
+    if not pairing:
+        return jsonify({"error": "Pairing request not found"}), 404
+
+    db.session.delete(pairing)
+    db.session.commit()
+
+    return jsonify({"message": "Deleted"})
