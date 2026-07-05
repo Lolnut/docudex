@@ -601,6 +601,20 @@ td[title] {
     background: #c73650;
 }
 
+.auth-delete-btn {
+    background: #e94560;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+}
+
+.auth-delete-btn:hover {
+    background: #c73650;
+}
+
 .auth-empty {
     text-align: center;
     padding: 20px;
